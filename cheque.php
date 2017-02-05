@@ -24,7 +24,7 @@
 *  International Registered Trademark & Property of PrestaShop SA
 */
 
-if (!defined('_PS_VERSION_'))
+if (!defined('_TB_VERSION_'))
 	exit;
 
 class Cheque extends PaymentModule
@@ -40,8 +40,8 @@ class Cheque extends PaymentModule
 	{
 		$this->name = 'cheque';
 		$this->tab = 'payments_gateways';
-		$this->version = '2.7.2';
-		$this->author = 'PrestaShop';
+		$this->version = '3.0.0';
+		$this->author = 'thirty bees';
 		$this->controllers = array('payment', 'validation');
 		$this->is_eu_compatible = 1;
 
