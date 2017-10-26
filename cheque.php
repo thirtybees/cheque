@@ -68,8 +68,8 @@ class Cheque extends PaymentModule
         $this->bootstrap = true;
         parent::__construct();
 
-        $this->displayName = $this->l('Payments by check');
-        $this->description = $this->l('This module allows you to accept payments by check.');
+        $this->displayName = $this->l('Payments by cheque');
+        $this->description = $this->l('This module allows you to accept payments by cheque.');
         $this->confirmUninstall = $this->l('Are you sure you want to delete these details?');
 
         if ((!isset($this->chequeName) || !isset($this->address) || empty($this->chequeName) || empty($this->address))) {
@@ -177,7 +177,7 @@ class Cheque extends PaymentModule
         }
 
         $paymentOptions = [
-            'cta_text' => $this->l('Pay by Check'),
+            'cta_text' => $this->l('Pay by cheque'),
             'logo'     => Media::getMediaPath(_PS_MODULE_DIR_.$this->name.'/cheque.jpg'),
             'action'   => $this->context->link->getModuleLink($this->name, 'validation', [], true),
         ];
@@ -261,7 +261,7 @@ class Cheque extends PaymentModule
                     [
                         'type'     => 'textarea',
                         'label'    => $this->l('Address'),
-                        'desc'     => $this->l('Address where the check should be sent to.'),
+                        'desc'     => $this->l('Address where the cheque should be sent to.'),
                         'name'     => static::CHEQUE_ADDRESS,
                         'required' => true,
                     ],

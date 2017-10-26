@@ -26,7 +26,7 @@
 {if $status == 'ok'}
   <div class="alert alert-success">{l s='Your order on %s is complete.' sprintf=$shop_name mod='cheque'}</div>
   <div class="box order-confirmation">
-    <h3 class="page-subheading">{l s='Your check must include:' mod='cheque'}</h3>
+    <h3 class="page-subheading">{l s='Your cheque must include:' mod='cheque'}</h3>
     - {l s='Payment amount.' mod='cheque'} <span class="price"><strong>{$total_to_pay}</strong></span>
     <br/>- {l s='Payable to the order of' mod='cheque'}
     <strong>{if $chequeName}{$chequeName}{else}___________{/if}</strong>
