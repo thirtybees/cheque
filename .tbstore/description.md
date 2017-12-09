@@ -1,0 +1,1 @@
+The thirty bees cheque module allows you to take payment by cheques on your site. The module gives users you business information and completes the order so that they can remit payment by cheque.

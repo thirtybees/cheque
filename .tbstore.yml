@@ -1,0 +1,14 @@
+module_name: Cheque
+compatible_versions: 1.0.0+
+author: thirty bees
+category: payment
+tags:
+  - check
+  - pay by check
+  - pay by cheque
+  - cheque
+description_short: The cheque module allows you to take cheque payments on your site.
+description: description.md
+images:
+  - image-1.png
+license: AFL
