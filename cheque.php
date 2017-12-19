@@ -51,7 +51,7 @@ class Cheque extends PaymentModule
     {
         $this->name = 'cheque';
         $this->tab = 'payments_gateways';
-        $this->version = '3.0.0';
+        $this->version = '3.1.0';
         $this->author = 'thirty bees';
         $this->controllers = ['payment', 'validation'];
         $this->is_eu_compatible = 1;
