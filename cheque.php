@@ -3,7 +3,7 @@
  * 2007-2016 PrestaShop
  *
  * Thirty Bees is an extension to the PrestaShop e-commerce software developed by PrestaShop SA
- * Copyright (C) 2017 Thirty Bees
+ * Copyright (C) 2017-2018 thirty bees
  *
  * NOTICE OF LICENSE
  *
@@ -17,7 +17,7 @@
  *
  * @author    Thirty Bees <modules@thirtybees.com>
  * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright 2017 Thirty Bees
+ * @copyright 2017-2018 thirty bees
  * @copyright 2007-2016 PrestaShop SA
  * @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
  *  PrestaShop is an internationally registered trademark & property of PrestaShop SA
@@ -44,6 +44,8 @@ class Cheque extends PaymentModule
 
     /**
      * Cheque constructor.
+     *
+     * @throws PrestaShopException
      */
     public function __construct()
     {
@@ -75,7 +77,8 @@ class Cheque extends PaymentModule
         if ((!isset($this->chequeName) || !isset($this->address) || empty($this->chequeName) || empty($this->address))) {
             $this->warning = $this->l('The "Pay to the order of" and "Address" fields must be configured before using this module.');
         }
-        if (!count(Currency::checkPaymentCurrencies($this->id))) {
+        $paymentCurrencies = Currency::checkPaymentCurrencies($this->id);
+        if (!is_array($paymentCurrencies) || empty($paymentCurrencies)) {
             $this->warning = $this->l('No currency has been set for this module.');
         }
 
@@ -90,11 +93,24 @@ class Cheque extends PaymentModule
      * Install this module
      *
      * @return bool
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      */
     public function install()
     {
-        if (!parent::install() || !$this->registerHook('payment') || !$this->registerHook('displayPaymentEU') || !$this->registerHook('paymentReturn')) {
+        if (!parent::install()) {
             return false;
+        }
+        foreach ([
+            'payment',
+            'displayPaymentEU',
+            'paymentReturn'
+                 ] as $hook) {
+            try {
+                $this->registerHook($hook);
+            } catch (Exception $e) {
+                $this->context->controller->errors[] = $e->getMessage();
+            }
         }
 
         return true;
@@ -104,6 +120,8 @@ class Cheque extends PaymentModule
      * Uninstall this module
      *
      * @return bool
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      */
     public function uninstall()
     {
@@ -130,9 +148,16 @@ class Cheque extends PaymentModule
             }
         }
 
-        $html .= $this->display(__FILE__, 'infos.tpl');
+        try {
+            $html .= $this->display(__FILE__, 'infos.tpl');
+        } catch (Exception $e) {
+        }
 
-        $html .= $this->renderForm();
+        try {
+            $html .= $this->renderForm();
+        } catch (Exception $e) {
+            $this->context->controller->errors[] = $e->getMessage();
+        }
 
         return $html;
     }
@@ -151,13 +176,25 @@ class Cheque extends PaymentModule
             return '';
         }
 
-        $this->smarty->assign([
-            'this_path'        => $this->_path,
-            'this_path_cheque' => $this->_path,
-            'this_path_ssl'    => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->name.'/',
-        ]);
+        try {
+            $this->smarty->assign([
+                'this_path'        => $this->_path,
+                'this_path_cheque' => $this->_path,
+                'this_path_ssl'    => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->name.'/',
+            ]);
+        } catch (PrestaShopException $e) {
+            Logger::addLog("Cheque module error: {$e->getMessage()}");
 
-        return $this->display(__FILE__, 'payment.tpl');
+            return '';
+        }
+
+        try {
+            return $this->display(__FILE__, 'payment.tpl');
+        } catch (Exception $e) {
+            Logger::addLog("Cheque module error: {$e->getMessage()}");
+
+            return '';
+        }
     }
 
     /**
@@ -176,11 +213,17 @@ class Cheque extends PaymentModule
             return [];
         }
 
-        $paymentOptions = [
-            'cta_text' => $this->l('Pay by cheque'),
-            'logo'     => Media::getMediaPath(_PS_MODULE_DIR_.$this->name.'/cheque.jpg'),
-            'action'   => $this->context->link->getModuleLink($this->name, 'validation', [], true),
-        ];
+        try {
+            $paymentOptions = [
+                'cta_text' => $this->l('Pay by cheque'),
+                'logo'     => Media::getMediaPath(_PS_MODULE_DIR_.$this->name.'/cheque.jpg'),
+                'action'   => $this->context->link->getModuleLink($this->name, 'validation', [], true),
+            ];
+        } catch (PrestaShopException $e) {
+            Logger::addLog("Cheque module error: {$e->getMessage()}");
+
+            return [];
+        }
 
         return $paymentOptions;
     }
@@ -198,23 +241,29 @@ class Cheque extends PaymentModule
             return '';
         }
 
-        $state = $params['objOrder']->getCurrentState();
-        if (in_array($state, [Configuration::get('PS_OS_CHEQUE'), Configuration::get('PS_OS_OUTOFSTOCK'), Configuration::get('PS_OS_OUTOFSTOCK_UNPAID')])) {
-            $this->smarty->assign([
-                'total_to_pay'  => Tools::displayPrice($params['total_to_pay'], $params['currencyObj'], false),
-                'chequeName'    => $this->chequeName,
-                'chequeAddress' => Tools::nl2br($this->address),
-                'status'        => 'ok',
-                'id_order'      => $params['objOrder']->id,
-            ]);
-            if (isset($params['objOrder']->reference) && !empty($params['objOrder']->reference)) {
-                $this->smarty->assign('reference', $params['objOrder']->reference);
+        try {
+            $state = $params['objOrder']->getCurrentState();
+            if (in_array($state, [Configuration::get('PS_OS_CHEQUE'), Configuration::get('PS_OS_OUTOFSTOCK'), Configuration::get('PS_OS_OUTOFSTOCK_UNPAID')])) {
+                $this->smarty->assign([
+                    'total_to_pay'  => Tools::displayPrice($params['total_to_pay'], $params['currencyObj'], false),
+                    'chequeName'    => $this->chequeName,
+                    'chequeAddress' => Tools::nl2br($this->address),
+                    'status'        => 'ok',
+                    'id_order'      => $params['objOrder']->id,
+                ]);
+                if (isset($params['objOrder']->reference) && !empty($params['objOrder']->reference)) {
+                    $this->smarty->assign('reference', $params['objOrder']->reference);
+                }
+            } else {
+                $this->smarty->assign('status', 'failed');
             }
-        } else {
-            $this->smarty->assign('status', 'failed');
-        }
 
-        return $this->display(__FILE__, 'payment_return.tpl');
+            return $this->display(__FILE__, 'payment_return.tpl');
+        } catch (Exception $e) {
+            Logger::addLog("Cheque module error: {$e->getMessage()}");
+
+            return '';
+        }
     }
 
     /**
@@ -227,7 +276,11 @@ class Cheque extends PaymentModule
     public function checkCurrency($cart)
     {
         $currencyOrder = new Currency((int) ($cart->id_currency));
-        $currenciesModule = $this->getCurrency((int) $cart->id_currency);
+        try {
+            $currenciesModule = $this->getCurrency((int) $cart->id_currency);
+        } catch (PrestaShopException $e) {
+            return false;
+        }
 
         if (is_array($currenciesModule)) {
             foreach ($currenciesModule as $currencyModule) {
@@ -272,24 +325,30 @@ class Cheque extends PaymentModule
             ],
         ];
 
-        $helper = new HelperForm();
-        $helper->show_toolbar = false;
-        $helper->table = $this->table;
-        $lang = new Language((int) Configuration::get('PS_LANG_DEFAULT'));
-        $helper->default_form_language = $lang->id;
-        $helper->allow_employee_form_lang = Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') ? Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') : 0;
-        $helper->id = (int) Tools::getValue('id_carrier');
-        $helper->identifier = $this->identifier;
-        $helper->submit_action = 'btnSubmit';
-        $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false).'&configure='.$this->name.'&tab_module='.$this->tab.'&module_name='.$this->name;
-        $helper->token = Tools::getAdminTokenLite('AdminModules');
-        $helper->tpl_vars = [
-            'fields_value' => $this->getConfigFieldsValues(),
-            'languages'    => $this->context->controller->getLanguages(),
-            'id_language'  => $this->context->language->id,
-        ];
+        try {
+            $helper = new HelperForm();
+            $helper->show_toolbar = false;
+            $helper->table = $this->table;
+            $lang = new Language((int) Configuration::get('PS_LANG_DEFAULT'));
+            $helper->default_form_language = $lang->id;
+            $helper->allow_employee_form_lang = Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') ? Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') : 0;
+            $helper->id = (int) Tools::getValue('id_carrier');
+            $helper->identifier = $this->identifier;
+            $helper->submit_action = 'btnSubmit';
+            $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false).'&configure='.$this->name.'&tab_module='.$this->tab.'&module_name='.$this->name;
+            $helper->token = Tools::getAdminTokenLite('AdminModules');
+            $helper->tpl_vars = [
+                'fields_value' => $this->getConfigFieldsValues(),
+                'languages'    => $this->context->controller->getLanguages(),
+                'id_language'  => $this->context->language->id,
+            ];
 
-        return $helper->generateForm([$fieldsForm]);
+            return $helper->generateForm([$fieldsForm]);
+        } catch (Exception $e) {
+            Logger::addLog("Cheque module error: {$e->getMessage()}");
+
+            return '';
+        }
     }
 
     /**
@@ -297,10 +356,19 @@ class Cheque extends PaymentModule
      */
     public function getConfigFieldsValues()
     {
-        return [
-            static::CHEQUE_NAME    => Tools::getValue(static::CHEQUE_NAME, Configuration::get(static::CHEQUE_NAME)),
-            static::CHEQUE_ADDRESS => Tools::getValue(static::CHEQUE_ADDRESS, Configuration::get(static::CHEQUE_ADDRESS)),
-        ];
+        try {
+            return [
+                static::CHEQUE_NAME    => Tools::getValue(static::CHEQUE_NAME, Configuration::get(static::CHEQUE_NAME)),
+                static::CHEQUE_ADDRESS => Tools::getValue(static::CHEQUE_ADDRESS, Configuration::get(static::CHEQUE_ADDRESS)),
+            ];
+        } catch (Exception $e) {
+            Logger::addLog("Cheque module error: {$e->getMessage()}");
+
+            return [
+                static::CHEQUE_NAME    => '',
+                static::CHEQUE_ADDRESS => '',
+            ];
+        }
     }
 
     /**
@@ -323,8 +391,11 @@ class Cheque extends PaymentModule
     protected function postProcess()
     {
         if (Tools::isSubmit('btnSubmit')) {
-            Configuration::updateValue('CHEQUE_NAME', Tools::getValue('CHEQUE_NAME'));
-            Configuration::updateValue('CHEQUE_ADDRESS', Tools::getValue('CHEQUE_ADDRESS'));
+            try {
+                Configuration::updateValue('CHEQUE_NAME', Tools::getValue('CHEQUE_NAME'));
+                Configuration::updateValue('CHEQUE_ADDRESS', Tools::getValue('CHEQUE_ADDRESS'));
+            } catch (PrestaShopException $e) {
+            }
         }
         $this->context->controller->confirmations[] = $this->l('Settings updated');
     }
