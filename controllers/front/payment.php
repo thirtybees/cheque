@@ -32,14 +32,20 @@ if (!defined('_TB_VERSION_')) {
  */
 class ChequePaymentModuleFrontController extends ModuleFrontController
 {
-    // @codingStandardsIgnoreStart
-    /** @var bool $ssl */
+    /**
+     * @var bool $ssl
+     */
     public $ssl = true;
-    /** @var bool $display_column_left */
+
+    /**
+     * @var bool $display_column_left
+     */
     public $display_column_left = false;
-    /** @var Cheque $module */
+
+    /**
+     * @var Cheque $module
+     */
     public $module;
-    // @codingStandardsIgnoreEnd
 
     /**
      * @see FrontController::initContent()

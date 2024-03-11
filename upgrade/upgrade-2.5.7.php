@@ -27,6 +27,12 @@ if (!defined('_TB_VERSION_')) {
     return;
 }
 
+
+/**
+ * @param Cheque $module
+ *
+ * @return true
+ */
 function upgrade_module_2_5_7($module)
 {
     return true;

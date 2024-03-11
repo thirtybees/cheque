@@ -27,6 +27,12 @@ if (!defined('_TB_VERSION_')) {
     return;
 }
 
+/**
+ * @param Cheque $module
+ *
+ * @return true
+ * @throws PrestaShopException
+ */
 function upgrade_module_2_5_8($module)
 {
     $hookToRemoveId = Hook::getIdByName('advancedPaymentApi');

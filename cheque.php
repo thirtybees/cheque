@@ -35,11 +35,19 @@ class Cheque extends PaymentModule
     const CHEQUE_NAME = 'CHEQUE_NAME';
     const CHEQUE_ADDRESS = 'CHEQUE_ADDRESS';
 
-    /** @var string $chequeName */
+    /**
+     * @var string $chequeName
+     */
     public $chequeName;
-    /** @var string $address */
+
+    /**
+     * @var string $address
+     */
     public $address;
-    /** @var array $extraMailVars */
+
+    /**
+     * @var array $extraMailVars
+     */
     public $extraMailVars;
 
     /**
@@ -93,7 +101,6 @@ class Cheque extends PaymentModule
      * Install this module
      *
      * @return bool
-     * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */
     public function install()
@@ -120,7 +127,6 @@ class Cheque extends PaymentModule
      * Uninstall this module
      *
      * @return bool
-     * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */
     public function uninstall()
@@ -166,6 +172,7 @@ class Cheque extends PaymentModule
      * @param array $params
      *
      * @return string
+     * @throws PrestaShopException
      */
     public function hookPayment($params)
     {
@@ -203,6 +210,7 @@ class Cheque extends PaymentModule
      * @param array $params
      *
      * @return array
+     * @throws PrestaShopException
      */
     public function hookDisplayPaymentEU($params)
     {
@@ -234,6 +242,7 @@ class Cheque extends PaymentModule
      * @param array $params
      *
      * @return string
+     * @throws PrestaShopException
      */
     public function hookPaymentReturn($params)
     {
@@ -272,6 +281,7 @@ class Cheque extends PaymentModule
      * @param Cart $cart
      *
      * @return bool
+     * @throws PrestaShopException
      */
     public function checkCurrency($cart)
     {
@@ -295,6 +305,7 @@ class Cheque extends PaymentModule
 
     /**
      * @return string
+     * @throws PrestaShopException
      */
     public function renderForm()
     {
@@ -353,6 +364,7 @@ class Cheque extends PaymentModule
 
     /**
      * @return array
+     * @throws PrestaShopException
      */
     public function getConfigFieldsValues()
     {

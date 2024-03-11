@@ -32,11 +32,15 @@ if (!defined('_TB_VERSION_')) {
  */
 class ChequeValidationModuleFrontController extends ModuleFrontController
 {
-    /** @var Cheque $module */
+    /**
+     * @var Cheque $module
+     */
     public $module;
 
     /**
      * @return void
+     * @throws PrestaShopException
+     * @throws SmartyException
      */
     public function postProcess()
     {
