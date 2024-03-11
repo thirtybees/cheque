@@ -34,6 +34,7 @@ class Cheque extends PaymentModule
 {
     const CHEQUE_NAME = 'CHEQUE_NAME';
     const CHEQUE_ADDRESS = 'CHEQUE_ADDRESS';
+    const ORDER_STATUS = 'PS_OS_CHEQUE';
 
     /**
      * @var string $chequeName
@@ -223,7 +224,7 @@ class Cheque extends PaymentModule
         }
 
         $state = $params['objOrder']->getCurrentState();
-        if (in_array($state, [Configuration::get('PS_OS_CHEQUE'), Configuration::get('PS_OS_OUTOFSTOCK'), Configuration::get('PS_OS_OUTOFSTOCK_UNPAID')])) {
+        if (in_array($state, [$this->getOrderStatusId(), Configuration::get('PS_OS_OUTOFSTOCK'), Configuration::get('PS_OS_OUTOFSTOCK_UNPAID')])) {
             $this->smarty->assign([
                 'total_to_pay'  => Tools::displayPrice($params['total_to_pay'], $params['currencyObj'], false),
                 'chequeName'    => $this->chequeName,
@@ -271,7 +272,7 @@ class Cheque extends PaymentModule
      */
     public function renderForm($controller)
     {
-        $fieldsForm = [
+        $contactForm = [
             'form' => [
                 'legend' => [
                     'title' => $this->l('Contact details'),
@@ -298,6 +299,32 @@ class Cheque extends PaymentModule
             ],
         ];
 
+        $settingsForm = [
+            'form' => [
+                'legend' => [
+                    'title' => $this->l('Order status'),
+                    'icon'  => 'icon-envelope',
+                ],
+                'input'  => [
+                    [
+                        'type'     => 'select',
+                        'label'    => $this->l('Order status'),
+                        'name'     => static::ORDER_STATUS,
+                        'options'  => [
+                            'query'   => OrderState::getOrderStates((int)$this->context->language->id),
+                            'id'      => 'id_order_state',
+                            'name'    => 'name',
+                            'orderby' => 'id_order_state',
+                        ],
+                        'class'    => 'fixed-width-xxl',
+                    ],
+                ],
+                'submit' => [
+                    'title' => $this->l('Save'),
+                ],
+            ],
+        ];
+
         $helper = new HelperForm();
         $helper->show_toolbar = false;
         $helper->table = $this->table;
@@ -315,7 +342,10 @@ class Cheque extends PaymentModule
             'id_language'  => $this->context->language->id,
         ];
 
-        return $helper->generateForm([$fieldsForm]);
+        return $helper->generateForm([
+            $settingsForm,
+            $contactForm
+        ]);
     }
 
     /**
@@ -327,6 +357,7 @@ class Cheque extends PaymentModule
         return [
             static::CHEQUE_NAME    => Tools::getValue(static::CHEQUE_NAME, Configuration::get(static::CHEQUE_NAME)),
             static::CHEQUE_ADDRESS => Tools::getValue(static::CHEQUE_ADDRESS, Configuration::get(static::CHEQUE_ADDRESS)),
+            static::ORDER_STATUS   => (int)Tools::getValue(static::ORDER_STATUS, $this->getOrderStatusId()),
         ];
     }
 
@@ -359,5 +390,18 @@ class Cheque extends PaymentModule
             Configuration::updateValue('CHEQUE_ADDRESS', Tools::getValue('CHEQUE_ADDRESS'));
         }
         $controller->confirmations[] = $this->l('Settings updated');
+    }
+
+    /**
+     * @return int
+     * @throws PrestaShopException
+     */
+    public function getOrderStatusId()
+    {
+        $status = (int)Configuration::get(static::ORDER_STATUS);
+        if (! $status) {
+            $status = (int)Configuration::get('PS_OS_PAYMENT');
+        }
+        return $status;
     }
 }

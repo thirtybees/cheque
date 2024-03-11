@@ -78,7 +78,7 @@ class ChequeValidationModuleFrontController extends ModuleFrontController
             '{cheque_address_html}' => str_replace("\n", '<br />', Configuration::get('CHEQUE_ADDRESS')),
         ];
 
-        $this->module->validateOrder((int) $cart->id, Configuration::get('PS_OS_CHEQUE'), $total, $this->module->displayName, null, $mailVars, (int) $currency->id, false, $customer->secure_key);
+        $this->module->validateOrder((int) $cart->id, $this->module->getOrderStatusId(), $total, $this->module->displayName, null, $mailVars, (int) $currency->id, false, $customer->secure_key);
         Tools::redirect('index.php?controller=order-confirmation&id_cart='.(int) $cart->id.'&id_module='.(int) $this->module->id.'&id_order='.$this->module->currentOrder.'&key='.$customer->secure_key);
     }
 }
