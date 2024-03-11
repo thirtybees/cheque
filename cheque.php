@@ -287,21 +287,12 @@ class Cheque extends PaymentModule
      */
     public function checkCurrency($cart)
     {
-        $currencyOrder = new Currency((int) ($cart->id_currency));
-        try {
-            $currenciesModule = $this->getCurrency((int) $cart->id_currency);
-        } catch (PrestaShopException $e) {
-            return false;
-        }
-
-        if (is_array($currenciesModule)) {
-            foreach ($currenciesModule as $currencyModule) {
-                if ($currencyOrder->id === $currencyModule['id_currency']) {
-                    return true;
-                }
+        $currencyId = (int)$cart->id_currency;
+        foreach (Currency::getPaymentCurrencies((int)$this->id) as $currencyModule) {
+            if ($currencyId === (int)$currencyModule['id_currency']) {
+                return true;
             }
         }
-
         return false;
     }
 
