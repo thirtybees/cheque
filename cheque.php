@@ -82,7 +82,7 @@ class Cheque extends PaymentModule
         $this->description = $this->l('This module allows you to accept payments by cheque.');
         $this->confirmUninstall = $this->l('Are you sure you want to delete these details?');
 
-        if ((!isset($this->chequeName) || !isset($this->address) || empty($this->chequeName) || empty($this->address))) {
+        if ((empty($this->chequeName) || empty($this->address))) {
             $this->warning = $this->l('The "Pay to the order of" and "Address" fields must be configured before using this module.');
         }
         $paymentCurrencies = Currency::checkPaymentCurrencies($this->id);
@@ -146,11 +146,13 @@ class Cheque extends PaymentModule
     public function getContent()
     {
         $html = '';
+        /** @var AdminController $controller */
+        $controller = $this->context->controller;
 
         if (Tools::isSubmit('btnSubmit')) {
             $this->postValidation();
-            if (!count($this->context->controller->errors)) {
-                $this->postProcess();
+            if (!count($controller->errors)) {
+                $this->postProcess($controller);
             }
         }
 
@@ -160,9 +162,9 @@ class Cheque extends PaymentModule
         }
 
         try {
-            $html .= $this->renderForm();
+            $html .= $this->renderForm($controller);
         } catch (Exception $e) {
-            $this->context->controller->errors[] = $e->getMessage();
+            $controller->errors[] = $e->getMessage();
         }
 
         return $html;
@@ -304,10 +306,13 @@ class Cheque extends PaymentModule
     }
 
     /**
+     * @param AdminController $controller
+     *
      * @return string
+     * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */
-    public function renderForm()
+    public function renderForm($controller)
     {
         $fieldsForm = [
             'form' => [
@@ -350,7 +355,7 @@ class Cheque extends PaymentModule
             $helper->token = Tools::getAdminTokenLite('AdminModules');
             $helper->tpl_vars = [
                 'fields_value' => $this->getConfigFieldsValues(),
-                'languages'    => $this->context->controller->getLanguages(),
+                'languages'    => $controller->getLanguages(),
                 'id_language'  => $this->context->language->id,
             ];
 
@@ -398,9 +403,12 @@ class Cheque extends PaymentModule
     }
 
     /**
+     *
      * Post process
+     *
+     * @param AdminController $controller
      */
-    protected function postProcess()
+    protected function postProcess($controller)
     {
         if (Tools::isSubmit('btnSubmit')) {
             try {
@@ -409,6 +417,6 @@ class Cheque extends PaymentModule
             } catch (PrestaShopException $e) {
             }
         }
-        $this->context->controller->confirmations[] = $this->l('Settings updated');
+        $controller->confirmations[] = $this->l('Settings updated');
     }
 }
