@@ -52,14 +52,11 @@ class ChequeValidationModuleFrontController extends ModuleFrontController
 
         // Check that this payment option is still available in case the customer changed his address just before the end of the checkout process
         $authorized = false;
-        try {
-            foreach (Module::getPaymentModules() as $module) {
-                if ($module['name'] == 'cheque') {
-                    $authorized = true;
-                    break;
-                }
+        foreach (Module::getPaymentModules() as $module) {
+            if ($module['name'] == 'cheque') {
+                $authorized = true;
+                break;
             }
-        } catch (PrestaShopException $e) {
         }
 
         if (!$authorized) {
@@ -75,25 +72,13 @@ class ChequeValidationModuleFrontController extends ModuleFrontController
         $currency = $this->context->currency;
         $total = (float) $cart->getOrderTotal(true, Cart::BOTH);
 
-        try {
-            $mailVars = [
-                '{cheque_name}'         => Configuration::get('CHEQUE_NAME'),
-                '{cheque_address}'      => Configuration::get('CHEQUE_ADDRESS'),
-                '{cheque_address_html}' => str_replace("\n", '<br />', Configuration::get('CHEQUE_ADDRESS')),
-            ];
-        } catch (PrestaShopException $e) {
-            $mailVars = [
-                '{cheque_name}'         => '',
-                '{cheque_address}'      => '',
-                '{cheque_address_html}' => '',
-            ];
-        }
+        $mailVars = [
+            '{cheque_name}'         => Configuration::get('CHEQUE_NAME'),
+            '{cheque_address}'      => Configuration::get('CHEQUE_ADDRESS'),
+            '{cheque_address_html}' => str_replace("\n", '<br />', Configuration::get('CHEQUE_ADDRESS')),
+        ];
 
-        try {
-            $this->module->validateOrder((int) $cart->id, Configuration::get('PS_OS_CHEQUE'), $total, $this->module->displayName, null, $mailVars, (int) $currency->id, false, $customer->secure_key);
-        } catch (PrestaShopException $e) {
-            Logger::addLog("Cheque module error during order validation: {$e->getMessage()}");
-        }
+        $this->module->validateOrder((int) $cart->id, Configuration::get('PS_OS_CHEQUE'), $total, $this->module->displayName, null, $mailVars, (int) $currency->id, false, $customer->secure_key);
         Tools::redirect('index.php?controller=order-confirmation&id_cart='.(int) $cart->id.'&id_module='.(int) $this->module->id.'&id_order='.$this->module->currentOrder.'&key='.$customer->secure_key);
     }
 }
